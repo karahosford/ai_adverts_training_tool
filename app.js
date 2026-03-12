@@ -72,8 +72,6 @@ const ui = {
   beginGameBtn: document.getElementById("beginGameBtn"),
   profileForm: document.getElementById("profileForm"),
 
-  roundLabel: document.getElementById("roundLabel"),
-  scoreLabel: document.getElementById("scoreLabel"),
   swipeCard: document.getElementById("swipeCard"),
   cardImage: document.getElementById("cardImage"),
   cardImageCounter: document.getElementById("cardImageCounter"),
@@ -447,8 +445,6 @@ function renderCurrentCard() {
     return;
   }
 
-  ui.roundLabel.textContent = `Round ${state.currentIndex + 1} / ${state.activeCards.length}`;
-  ui.scoreLabel.textContent = `Score: ${state.correct}`;
   state.currentImageIndex = 0;
   renderCardImage();
   ui.cardTitle.textContent = card.title;

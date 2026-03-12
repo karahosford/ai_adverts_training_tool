@@ -258,13 +258,6 @@ button {
   overflow: hidden;
 }
 
-.progress-row {
-  display: flex;
-  justify-content: space-between;
-  color: var(--muted);
-  font-weight: 700;
-}
-
 .card-wrap {
   margin-top: 12px;
   display: flex;
