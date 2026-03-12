@@ -3,6 +3,61 @@ const STORAGE_KEYS = {
   customDataset: "sts_custom_dataset_v1",
 };
 
+const DEFAULT_DATASET_FALLBACK = {
+  name: "Starter Demo Set",
+  version: "1.0",
+  items: [
+    {
+      id: "real-1",
+      title: "Suburban House",
+      description: "A daylight suburban home advert featuring warm, natural shadows.",
+      truth: "real",
+      image: "assets/images/real-1.svg",
+      source: "Prototype synthetic artwork",
+    },
+    {
+      id: "real-2",
+      title: "Rustic Cottage",
+      description: "A countryside property listing with realistic texture and lighting cues.",
+      truth: "real",
+      image: "assets/images/real-2.svg",
+      source: "Prototype synthetic artwork",
+    },
+    {
+      id: "real-3",
+      title: "Product Card Mockup",
+      description: "A clean lifestyle campaign mockup showing a genuine product scene.",
+      truth: "real",
+      image: "assets/images/real-3.svg",
+      source: "Prototype synthetic artwork",
+    },
+    {
+      id: "ai-1",
+      title: "Dream Portrait",
+      description: "A stylized portrait ad with polished details and synthetic composition.",
+      truth: "ai",
+      image: "assets/images/ai-1.svg",
+      source: "Prototype synthetic artwork",
+    },
+    {
+      id: "ai-2",
+      title: "Geometric Core",
+      description: "A conceptual campaign visual generated with geometric AI aesthetics.",
+      truth: "ai",
+      image: "assets/images/ai-2.svg",
+      source: "Prototype synthetic artwork",
+    },
+    {
+      id: "ai-3",
+      title: "Neural Glow",
+      description: "An abstract glowing ad graphic with typical AI texture artifacts.",
+      truth: "ai",
+      image: "assets/images/ai-3.svg",
+      source: "Prototype synthetic artwork",
+    },
+  ],
+};
+
 const views = {
   consent: document.getElementById("consentView"),
   profile: document.getElementById("profileView"),
@@ -27,7 +82,7 @@ const ui = {
   imagePrevBtn: document.getElementById("imagePrevBtn"),
   imageNextBtn: document.getElementById("imageNextBtn"),
   cardTitle: document.getElementById("cardTitle"),
-  cardInstruction: document.getElementById("cardInstruction"),
+  cardDescription: document.getElementById("cardDescription"),
   leftHint: document.getElementById("leftHint"),
   rightHint: document.getElementById("rightHint"),
   guessAiBtn: document.getElementById("guessAiBtn"),
@@ -117,6 +172,7 @@ function normalizeDataset(rawDataset) {
 
       return {
         ...item,
+        description: String(item?.description || "").trim(),
         image: uniqueImages[0],
         images: uniqueImages,
       };
@@ -135,6 +191,15 @@ function getCardImages(card) {
   if (Array.isArray(card.images) && card.images.length > 0) return card.images;
   if (typeof card.image === "string" && card.image.trim()) return [card.image];
   return [];
+}
+
+function resolveImageSrc(src) {
+  if (!src) return "";
+  if (/^(data:|blob:|https?:|file:)/i.test(src)) return src;
+  if (src.startsWith("/")) {
+    return `${window.location.origin}${src}`;
+  }
+  return new URL(src, window.location.href).href;
 }
 
 function showView(viewName) {
@@ -368,8 +433,16 @@ async function loadDataset() {
     }
   }
 
-  const response = await fetch("data/default-dataset.json");
-  state.dataset = normalizeDataset(await response.json());
+  try {
+    const response = await fetch("data/default-dataset.json");
+    if (!response.ok) {
+      throw new Error(`Default dataset request failed with ${response.status}`);
+    }
+    state.dataset = normalizeDataset(await response.json());
+  } catch {
+    // Fallback keeps the app functional when opened via file:// or when fetch paths fail.
+    state.dataset = normalizeDataset(DEFAULT_DATASET_FALLBACK);
+  }
   renderBuilderList();
 }
 
@@ -388,7 +461,7 @@ function renderBuilderList() {
     .map(
       (item, index) => `
       <article class="builder-item">
-        <img src="${getCardImages(item)[0]}" alt="${item.title}" />
+        <img src="${resolveImageSrc(getCardImages(item)[0])}" alt="${item.title}" />
         <div>
           <strong>${item.title}</strong>
           <span class="tag ${item.truth}">${item.truth.toUpperCase()}</span>
@@ -442,6 +515,8 @@ function renderCurrentCard() {
   state.currentImageIndex = 0;
   renderCardImage();
   ui.cardTitle.textContent = card.title;
+  ui.cardDescription.textContent =
+    String(card.description || "").trim() || "No description provided for this ad.";
   resetCardTransform();
   state.cardStartedAt = Date.now();
 }
@@ -452,7 +527,8 @@ function renderCardImage() {
   if (images.length === 0) {
     ui.cardImage.removeAttribute("src");
     ui.cardImageCounter.hidden = true;
-    ui.cardInstruction.textContent = "Use left/right actions to classify.";
+    ui.imagePrevBtn.hidden = true;
+    ui.imageNextBtn.hidden = true;
     return;
   }
 
@@ -463,7 +539,7 @@ function renderCardImage() {
     state.currentImageIndex = 0;
   }
 
-  ui.cardImage.src = images[state.currentImageIndex];
+  ui.cardImage.src = resolveImageSrc(images[state.currentImageIndex]);
   const hasMultiple = images.length > 1;
   ui.cardImageCounter.hidden = !hasMultiple;
   ui.cardImageCounter.textContent = `${state.currentImageIndex + 1} / ${images.length}`;
@@ -471,10 +547,6 @@ function renderCardImage() {
   ui.imageNextBtn.hidden = !hasMultiple;
   ui.imagePrevBtn.disabled = state.currentImageIndex === 0;
   ui.imageNextBtn.disabled = state.currentImageIndex === images.length - 1;
-  ui.cardInstruction.textContent =
-    images.length > 1
-      ? "Swipe image left/right to browse | swipe card left = AI, right = real"
-      : "Swipe card left = AI-generated | right = real";
 }
 
 function moveCardImage(step) {
@@ -708,6 +780,7 @@ function bindSwipe() {
 
   ui.swipeCard.addEventListener("pointerdown", (event) => {
     if (state.swipeLock) return;
+    if (event.target instanceof Element && event.target.closest(".image-nav-btn")) return;
     const card = state.activeCards[state.currentIndex];
     const imageCount = getCardImages(card).length;
 
@@ -806,6 +879,11 @@ function bindEvents() {
     moveCardImage(1);
   });
 
+  [ui.imagePrevBtn, ui.imageNextBtn].forEach((btn) => {
+    btn.addEventListener("pointerdown", (event) => event.stopPropagation());
+    btn.addEventListener("pointerup", (event) => event.stopPropagation());
+  });
+
   ui.playAgainBtn.addEventListener("click", () => {
     showView("profile");
   });
@@ -870,12 +948,14 @@ function bindEvents() {
 
     const imageDataUrls = await Promise.all(selectedFiles.map((file) => fileToDataUrl(file)));
     const title = String(data.get("title") || "Untitled");
+    const description = String(data.get("description") || "").trim();
     const truth = String(data.get("truth") || "ai");
     const id = `${truth}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
     state.dataset.items.push({
       id,
       title,
+      description,
       truth,
       image: imageDataUrls[0],
       images: imageDataUrls,

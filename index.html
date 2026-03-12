@@ -142,7 +142,7 @@
               </div>
               <div class="card-meta">
                 <h3 id="cardTitle"></h3>
-                <p id="cardInstruction">Swipe card left = AI-generated | right = real</p>
+                <p id="cardDescription">No description provided for this ad.</p>
               </div>
               <span id="leftHint" class="swipe-hint left">AI</span>
               <span id="rightHint" class="swipe-hint right">REAL</span>
@@ -291,6 +291,14 @@
             <label>
               Card Title
               <input name="title" required placeholder="e.g. Studio portrait" />
+            </label>
+            <label class="full-width">
+              Ad Description
+              <input
+                name="description"
+                maxlength="240"
+                placeholder="e.g. Limited-time offer featuring a family home in daylight."
+              />
             </label>
             <label>
               Ground Truth
