@@ -1,0 +1,48 @@
+{
+  "name": "Starter Demo Set",
+  "version": "1.0",
+  "items": [
+    {
+      "id": "real-1",
+      "title": "Suburban House",
+      "truth": "real",
+      "image": "assets/images/real-1.svg",
+      "source": "Prototype synthetic artwork"
+    },
+    {
+      "id": "real-2",
+      "title": "Rustic Cottage",
+      "truth": "real",
+      "image": "assets/images/real-2.svg",
+      "source": "Prototype synthetic artwork"
+    },
+    {
+      "id": "real-3",
+      "title": "Product Card Mockup",
+      "truth": "real",
+      "image": "assets/images/real-3.svg",
+      "source": "Prototype synthetic artwork"
+    },
+    {
+      "id": "ai-1",
+      "title": "Dream Portrait",
+      "truth": "ai",
+      "image": "assets/images/ai-1.svg",
+      "source": "Prototype synthetic artwork"
+    },
+    {
+      "id": "ai-2",
+      "title": "Geometric Core",
+      "truth": "ai",
+      "image": "assets/images/ai-2.svg",
+      "source": "Prototype synthetic artwork"
+    },
+    {
+      "id": "ai-3",
+      "title": "Neural Glow",
+      "truth": "ai",
+      "image": "assets/images/ai-3.svg",
+      "source": "Prototype synthetic artwork"
+    }
+  ]
+}

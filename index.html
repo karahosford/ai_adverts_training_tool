@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ai Fraud Surveying Tool</title>
+    <meta
+      name="description"
+      content="A swipe-based research prototype for detecting AI-generated versus real content."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <h1><a class="title-link" href="./">Ai Fraud Surveying Tool</a></h1>
+        <div class="button-row topbar-actions">
+          <button id="openDashboardBtn" class="ghost-btn" type="button">Research Dashboard</button>
+          <button id="openBuilderBtn" class="ghost-btn" type="button">Dataset Builder</button>
+        </div>
+      </header>
+
+      <section id="consentView" class="view active">
+        <div class="panel glass">
+          <p class="eyebrow">Research Prototype</p>
+          <h2>Can you spot AI images in a swipe challenge?</h2>
+          <p>
+            This study asks you to classify visual content as AI-generated or real. Your responses
+            are anonymous unless you choose to share identifying details.
+          </p>
+          <ul class="info-list">
+            <li>Swipe left for AI-generated.</li>
+            <li>Swipe right for real content.</li>
+            <li>Desktop users can click the action buttons.</li>
+            <li>Your results are shown at the end, including an overall ranking estimate.</li>
+          </ul>
+          <div class="consent-box">
+            <h3>Information & Consent</h3>
+            <p>
+              Participation is voluntary. You can stop at any point by closing the page. Data is
+              stored locally in your browser until exported by the research team.
+            </p>
+            <label class="check-row">
+              <input id="consentCheckbox" type="checkbox" />
+              <span>I have read the study information and I give consent to participate.</span>
+            </label>
+          </div>
+          <button id="startProfileBtn" class="primary-btn" type="button" disabled>
+            I Give Consent
+          </button>
+        </div>
+      </section>
+
+      <section id="profileView" class="view">
+        <div class="panel">
+          <p class="eyebrow">Step 1 of 3</p>
+          <h2>Profile Setup</h2>
+          <p>Provide demographic details commonly used in survey research.</p>
+
+          <form id="profileForm" class="grid-form">
+            <label>
+              Participant Code
+              <input name="participantCode" type="text" maxlength="30" placeholder="Optional" />
+            </label>
+            <label>
+              Age Group
+              <select name="ageGroup" required>
+                <option value="">Select...</option>
+                <option>Under 18</option>
+                <option>18-24</option>
+                <option>25-34</option>
+                <option>35-44</option>
+                <option>45-54</option>
+                <option>55-64</option>
+                <option>65+</option>
+                <option>Prefer not to say</option>
+              </select>
+            </label>
+            <label>
+              Gender
+              <select name="gender" required>
+                <option value="">Select...</option>
+                <option>Female</option>
+                <option>Male</option>
+                <option>Non-binary</option>
+                <option>Prefer not to say</option>
+              </select>
+            </label>
+            <label>
+              Country / Region
+              <input name="region" type="text" required placeholder="e.g. UK" />
+            </label>
+            <label>
+              Education
+              <select name="education" required>
+                <option value="">Select...</option>
+                <option>Secondary school</option>
+                <option>Vocational qualification</option>
+                <option>Undergraduate degree</option>
+                <option>Postgraduate degree</option>
+                <option>Doctorate</option>
+                <option>Prefer not to say</option>
+              </select>
+            </label>
+            <label>
+              AI Familiarity
+              <select name="aiFamiliarity" required>
+                <option value="">Select...</option>
+                <option>Never used AI tools</option>
+                <option>Occasional user</option>
+                <option>Weekly user</option>
+                <option>Daily user</option>
+                <option>Professional user</option>
+              </select>
+            </label>
+          </form>
+
+          <div class="button-row">
+            <button id="toConsentBtn" class="ghost-btn" type="button">Back</button>
+            <button id="beginGameBtn" class="primary-btn" type="button">Start Challenge</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="gameView" class="view">
+        <div class="panel game-panel">
+          <div class="progress-row">
+            <p id="roundLabel">Round 1</p>
+            <p id="scoreLabel">Score: 0</p>
+          </div>
+
+          <div id="cardWrap" class="card-wrap">
+            <article id="swipeCard" class="swipe-card">
+              <img id="cardImage" alt="Challenge image" />
+              <div class="card-meta">
+                <h3 id="cardTitle"></h3>
+                <p>Swipe left = AI-generated | right = real</p>
+              </div>
+              <span id="leftHint" class="swipe-hint left">AI</span>
+              <span id="rightHint" class="swipe-hint right">REAL</span>
+            </article>
+          </div>
+
+          <div class="button-row game-actions">
+            <button id="guessAiBtn" class="danger-btn" type="button">Left: AI</button>
+            <button id="guessRealBtn" class="success-btn" type="button">Right: Real</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="resultView" class="view">
+        <div class="panel glass">
+          <p class="eyebrow">Challenge Complete</p>
+          <h2 id="finalHeadline">You scored 0%</h2>
+          <p id="finalSummary"></p>
+          <div class="stats-grid">
+            <article>
+              <h3 id="correctCount">0 / 0</h3>
+              <p>Correct Classifications</p>
+            </article>
+            <article>
+              <h3 id="avgTime">0.0s</h3>
+              <p>Average Response Time</p>
+            </article>
+            <article>
+              <h3 id="percentile">0th</h3>
+              <p>Estimated Percentile</p>
+            </article>
+          </div>
+          <div class="button-row">
+            <button id="downloadSessionBtn" class="ghost-btn" type="button">Download Session JSON</button>
+            <button id="downloadCsvBtn" class="ghost-btn" type="button">Download Session CSV</button>
+            <button id="playAgainBtn" class="primary-btn" type="button">Play Again</button>
+          </div>
+          <div class="research-row">
+            <button id="openDashboardFromResultBtn" class="ghost-btn" type="button">Research: Open Dashboard</button>
+            <button id="downloadAllBtn" class="ghost-btn" type="button">Research: Download All Local Sessions</button>
+            <button id="clearAllBtn" class="ghost-btn" type="button">Research: Clear Local Sessions</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboardView" class="view">
+        <div class="panel">
+          <p class="eyebrow">Research Analytics</p>
+          <h2>Participant Dashboard</h2>
+          <p>Filter by demographic variables to inspect performance and confusion trends.</p>
+
+          <div class="dashboard-filters">
+            <label>
+              Age Group
+              <select id="filterAgeGroup">
+                <option value="all">All</option>
+              </select>
+            </label>
+            <label>
+              Gender
+              <select id="filterGender">
+                <option value="all">All</option>
+              </select>
+            </label>
+            <label>
+              AI Familiarity
+              <select id="filterAiFamiliarity">
+                <option value="all">All</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button id="resetDashboardFiltersBtn" class="ghost-btn" type="button">Reset Filters</button>
+            <button id="closeDashboardBtn" class="ghost-btn" type="button">Back To Start</button>
+          </div>
+
+          <div class="stats-grid dashboard-stats">
+            <article>
+              <h3 id="dashSessionCount">0</h3>
+              <p>Sessions</p>
+            </article>
+            <article>
+              <h3 id="dashDecisionCount">0</h3>
+              <p>Classifications</p>
+            </article>
+            <article>
+              <h3 id="dashAccuracy">0%</h3>
+              <p>Overall Accuracy</p>
+            </article>
+            <article>
+              <h3 id="dashAvgTime">0.0s</h3>
+              <p>Avg Response Time</p>
+            </article>
+          </div>
+
+          <h3 class="section-heading">Confusion Matrix</h3>
+          <div class="matrix-wrap">
+            <table class="matrix-table">
+              <thead>
+                <tr>
+                  <th>Truth / Guess</th>
+                  <th>AI</th>
+                  <th>Real</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>AI</th>
+                  <td id="dashTP">0</td>
+                  <td id="dashFN">0</td>
+                </tr>
+                <tr>
+                  <th>Real</th>
+                  <td id="dashFP">0</td>
+                  <td id="dashTN">0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="section-heading">Segment Performance</h3>
+          <div class="matrix-wrap">
+            <table class="matrix-table">
+              <thead>
+                <tr>
+                  <th>Segment</th>
+                  <th>Sessions</th>
+                  <th>Mean Score</th>
+                </tr>
+              </thead>
+              <tbody id="dashSegmentBody"></tbody>
+            </table>
+          </div>
+          <p id="dashEmptyState" class="empty-state" hidden>No session data matches the selected filters yet.</p>
+        </div>
+      </section>
+
+      <section id="builderView" class="view">
+        <div class="panel">
+          <p class="eyebrow">Research Utility</p>
+          <h2>Dataset Builder</h2>
+          <p>Create or include your own image cards. Saved locally in this browser.</p>
+
+          <form id="builderForm" class="grid-form">
+            <label>
+              Card Title
+              <input name="title" required placeholder="e.g. Studio portrait" />
+            </label>
+            <label>
+              Ground Truth
+              <select name="truth" required>
+                <option value="">Select...</option>
+                <option value="ai">AI-generated</option>
+                <option value="real">Real</option>
+              </select>
+            </label>
+            <label class="full-width">
+              Choose Image File
+              <input name="imageFile" type="file" accept="image/*" required />
+            </label>
+          </form>
+
+          <div class="button-row">
+            <button id="addCardBtn" class="primary-btn" type="button">Add Card</button>
+            <button id="exportDatasetBtn" class="ghost-btn" type="button">Export Dataset JSON</button>
+            <label class="import-label ghost-btn">
+              Import Dataset JSON
+              <input id="importDatasetInput" type="file" accept="application/json" hidden />
+            </label>
+            <button id="resetDatasetBtn" class="ghost-btn" type="button">Reset To Default</button>
+            <button id="closeBuilderBtn" class="ghost-btn" type="button">Back To Start</button>
+          </div>
+
+          <div id="builderList" class="builder-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
