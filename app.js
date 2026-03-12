@@ -438,6 +438,15 @@ function beginGame() {
   renderCurrentCard();
 }
 
+function preloadCardImages(cardIndex) {
+  const card = state.activeCards[cardIndex];
+  if (!card) return;
+  getCardImages(card).forEach((src) => {
+    const img = new Image();
+    img.src = resolveImageSrc(src);
+  });
+}
+
 function renderCurrentCard() {
   const card = state.activeCards[state.currentIndex];
   if (!card) {
@@ -452,6 +461,11 @@ function renderCurrentCard() {
     String(card.description || "").trim() || "No description provided for this ad.";
   resetCardTransform();
   state.cardStartedAt = Date.now();
+
+  // Preload all images for current card + the next two cards
+  preloadCardImages(state.currentIndex);
+  preloadCardImages(state.currentIndex + 1);
+  preloadCardImages(state.currentIndex + 2);
 }
 
 function renderCardImage() {
