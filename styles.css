@@ -373,60 +373,6 @@ button {
 }
 
 .card-description {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.inline-more-btn {
-  border: 0;
-  background: none;
-  color: var(--accent-alt);
-  font-weight: 700;
-  padding: 0;
-  margin-top: 8px;
-  cursor: pointer;
-}
-
-.inline-more-btn:hover {
-  text-decoration: underline;
-}
-
-.description-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-}
-
-.description-overlay-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(14, 18, 32, 0.58);
-}
-
-.description-overlay-card {
-  position: relative;
-  z-index: 1;
-  width: min(560px, 96vw);
-  max-height: min(80vh, 620px);
-  overflow: auto;
-  padding: 20px;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 20px 40px rgba(18, 20, 29, 0.35);
-}
-
-.description-overlay-card h3 {
-  margin-bottom: 10px;
-}
-
-.description-overlay-card p {
-  margin: 0;
-  color: var(--muted);
   white-space: pre-wrap;
 }
 

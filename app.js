@@ -81,16 +81,10 @@ const ui = {
   cardTitle: document.getElementById("cardTitle"),
   cardPrice: document.getElementById("cardPrice"),
   cardDescription: document.getElementById("cardDescription"),
-  cardDescriptionMoreBtn: document.getElementById("cardDescriptionMoreBtn"),
   leftHint: document.getElementById("leftHint"),
   rightHint: document.getElementById("rightHint"),
   guessAiBtn: document.getElementById("guessAiBtn"),
   guessRealBtn: document.getElementById("guessRealBtn"),
-
-  descriptionOverlay: document.getElementById("descriptionOverlay"),
-  descriptionOverlayBackdrop: document.getElementById("descriptionOverlayBackdrop"),
-  descriptionOverlayText: document.getElementById("descriptionOverlayText"),
-  closeDescriptionOverlayBtn: document.getElementById("closeDescriptionOverlayBtn"),
 
   finalHeadline: document.getElementById("finalHeadline"),
   finalSummary: document.getElementById("finalSummary"),
@@ -141,7 +135,6 @@ const state = {
     deltaX: 0,
     mode: "choice",
   },
-  overlayOpen: false,
 };
 
 function normalizeCardText(value, fallback = "") {
@@ -500,31 +493,6 @@ function preloadCardImages(cardIndex) {
   });
 }
 
-function updateDescriptionOverflowControl() {
-  if (!ui.cardDescription || !ui.cardDescriptionMoreBtn) return;
-  requestAnimationFrame(() => {
-    const hasOverflow = ui.cardDescription.scrollHeight - ui.cardDescription.clientHeight > 1;
-    ui.cardDescriptionMoreBtn.hidden = !hasOverflow;
-  });
-}
-
-function openDescriptionOverlay() {
-  const card = state.activeCards[state.currentIndex];
-  if (!card) return;
-
-  const fullDescription = normalizeCardText(card.description, "No description provided for this ad.");
-  ui.descriptionOverlayText.textContent = fullDescription;
-  ui.descriptionOverlay.hidden = false;
-  state.overlayOpen = true;
-  document.body.style.overflow = "hidden";
-}
-
-function closeDescriptionOverlay() {
-  ui.descriptionOverlay.hidden = true;
-  state.overlayOpen = false;
-  document.body.style.overflow = "";
-}
-
 function renderCurrentCard() {
   const card = state.activeCards[state.currentIndex];
   if (!card) {
@@ -538,9 +506,6 @@ function renderCurrentCard() {
   ui.cardPrice.textContent = `Price: ${normalizeCardText(card.price, "Not listed")}`;
   ui.cardDescription.textContent =
     normalizeCardText(card.description, "No description provided for this ad.");
-  ui.cardDescriptionMoreBtn.hidden = true;
-  closeDescriptionOverlay();
-  updateDescriptionOverflowControl();
   resetCardTransform();
   state.cardStartedAt = Date.now();
 
@@ -635,8 +600,9 @@ function moveCardImage(step) {
 }
 
 function resetCardTransform() {
-  ui.swipeCard.style.transition = "transform 180ms ease";
+  ui.swipeCard.style.transition = "transform 180ms ease, background-color 180ms ease";
   ui.swipeCard.style.transform = "translateX(0) rotate(0deg)";
+  ui.swipeCard.style.backgroundColor = "#fff";
   ui.cardImage.style.transition = "transform 180ms ease";
   ui.cardImage.style.transform = "translateX(0)";
   ui.choiceTint.style.opacity = "0";
@@ -722,6 +688,7 @@ function animateChoice(choice, onDone) {
   const direction = choice === "ai" ? -1 : 1;
   ui.leftHint.style.opacity = choice === "ai" ? "1" : "0";
   ui.rightHint.style.opacity = choice === "real" ? "1" : "0";
+  ui.swipeCard.style.backgroundColor = choice === "ai" ? "#ffe6e6" : "#e4f7e8";
   ui.choiceTint.classList.remove("ai", "real");
   ui.choiceTint.classList.add(choice);
   ui.choiceTint.style.opacity = "0.9";
@@ -864,6 +831,14 @@ function bindSwipe() {
     ui.swipeCard.style.transform = `translateX(${state.pointer.deltaX}px) rotate(${rotate}deg)`;
 
     const opacity = Math.min(Math.abs(state.pointer.deltaX) / choiceThreshold, 1);
+    if (state.pointer.deltaX < 0) {
+      ui.swipeCard.style.backgroundColor = `rgba(255, 230, 230, ${0.3 + opacity * 0.7})`;
+    } else if (state.pointer.deltaX > 0) {
+      ui.swipeCard.style.backgroundColor = `rgba(228, 247, 232, ${0.3 + opacity * 0.7})`;
+    } else {
+      ui.swipeCard.style.backgroundColor = "#fff";
+    }
+
     ui.leftHint.style.opacity = state.pointer.deltaX < 0 ? String(opacity) : "0";
     ui.rightHint.style.opacity = state.pointer.deltaX > 0 ? String(opacity) : "0";
 
@@ -932,21 +907,6 @@ function bindEvents() {
   ui.imageNextBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     moveCardImage(1);
-  });
-
-  ui.cardDescriptionMoreBtn.addEventListener("click", () => openDescriptionOverlay());
-  ui.closeDescriptionOverlayBtn.addEventListener("click", () => closeDescriptionOverlay());
-  ui.descriptionOverlayBackdrop.addEventListener("click", () => closeDescriptionOverlay());
-
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && state.overlayOpen) {
-      closeDescriptionOverlay();
-    }
-  });
-
-  window.addEventListener("resize", () => {
-    if (!views.game.classList.contains("active")) return;
-    updateDescriptionOverflowControl();
   });
 
   [ui.imagePrevBtn, ui.imageNextBtn].forEach((btn) => {
