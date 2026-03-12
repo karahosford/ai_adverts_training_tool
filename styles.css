@@ -351,25 +351,34 @@ button {
 
 .swipe-hint {
   position: absolute;
-  top: 20px;
-  border: 3px solid;
-  padding: 6px 10px;
-  border-radius: 10px;
+  top: 50%;
+  left: 50%;
+  border: 6px solid;
+  padding: 16px 32px;
+  border-radius: 12px;
   font-weight: 800;
+  font-size: 2.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   opacity: 0;
   transition: opacity 120ms;
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
 }
 
 .swipe-hint.left {
-  left: 16px;
+  transform: translate(-50%, -50%) rotate(-20deg);
   color: var(--bad);
   border-color: var(--bad);
+  text-shadow: 0 0 12px rgba(224, 49, 49, 0.35);
 }
 
 .swipe-hint.right {
-  right: 16px;
+  transform: translate(-50%, -50%) rotate(20deg);
   color: var(--good);
   border-color: var(--good);
+  text-shadow: 0 0 12px rgba(47, 158, 68, 0.35);
 }
 
 .game-actions {

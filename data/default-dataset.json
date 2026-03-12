@@ -19,10 +19,10 @@
       "title": "White iPad 128GB",
       "description": "€130 - Slightly worn iPad with minor scratches on the screen.",
       "truth": "ai",
-      "image": "assets/images/ipad_g.png",
+      "image": "assets/images/ipad_g2.png",
       "images": [
-        "assets/images/ipad_g.png",
-        "assets/images/ipad_g2.png"
+        "assets/images/ipad_g2.png",
+        "assets/images/ipad_g.png"
       ],
       "source": "Curated local assets"
     },

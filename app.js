@@ -490,8 +490,51 @@ function moveCardImage(step) {
   const nextIndex = state.currentImageIndex + step;
   if (nextIndex < 0 || nextIndex >= images.length) return false;
 
-  state.currentImageIndex = nextIndex;
-  renderCardImage();
+  const currentImg = ui.cardImage;
+  const stage = currentImg.parentElement;
+  const direction = step > 0 ? 1 : -1;
+  const imgHeight = currentImg.offsetHeight || currentImg.clientHeight || 300;
+
+  // Create incoming image element
+  const incomingImg = document.createElement("img");
+  incomingImg.src = resolveImageSrc(images[nextIndex]);
+  incomingImg.alt = currentImg.alt;
+  incomingImg.style.cssText = [
+    "position:absolute",
+    "top:0",
+    "left:0",
+    "width:100%",
+    `height:${imgHeight}px`,
+    "object-fit:cover",
+    "background:#e6ebf4",
+    `transform:translateX(${direction * 100}%)`,
+    "transition:transform 320ms cubic-bezier(0.25,0.46,0.45,0.94)",
+    "will-change:transform",
+  ].join(";");
+  stage.appendChild(incomingImg);
+
+  // Slide current image out
+  currentImg.style.transition = "transform 320ms cubic-bezier(0.25,0.46,0.45,0.94)";
+  currentImg.style.willChange = "transform";
+
+  // Trigger transition on next frame
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      incomingImg.style.transform = "translateX(0%)";
+      currentImg.style.transform = `translateX(${-direction * 100}%)`;
+    });
+  });
+
+  incomingImg.addEventListener("transitionend", () => {
+    // Swap: update the real img src and reset
+    state.currentImageIndex = nextIndex;
+    currentImg.style.transition = "";
+    currentImg.style.transform = "";
+    currentImg.style.willChange = "";
+    renderCardImage();
+    stage.removeChild(incomingImg);
+  }, { once: true });
+
   return true;
 }
 
