@@ -720,14 +720,18 @@ function registerChoice(choice) {
 
 function animateChoice(choice, onDone) {
   const direction = choice === "ai" ? -1 : 1;
-  ui.swipeCard.style.transition = "transform 220ms ease";
-  ui.swipeCard.style.transform = `translateX(${direction * 380}px) rotate(${direction * 18}deg)`;
   ui.leftHint.style.opacity = choice === "ai" ? "1" : "0";
   ui.rightHint.style.opacity = choice === "real" ? "1" : "0";
   ui.choiceTint.classList.remove("ai", "real");
   ui.choiceTint.classList.add(choice);
-  ui.choiceTint.style.opacity = "0.82";
-  setTimeout(onDone, 220);
+  ui.choiceTint.style.opacity = "0.9";
+
+  // Hold the feedback momentarily so the user can actually register it.
+  setTimeout(() => {
+    ui.swipeCard.style.transition = "transform 260ms ease";
+    ui.swipeCard.style.transform = `translateX(${direction * 380}px) rotate(${direction * 18}deg)`;
+    setTimeout(onDone, 260);
+  }, 180);
 }
 
 function finishGame() {
