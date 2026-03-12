@@ -17,10 +17,6 @@
     <main class="app-shell">
       <header class="topbar">
         <h1><a class="title-link" href="./">Ai Fraud Surveying Tool</a></h1>
-        <div class="button-row topbar-actions">
-          <button id="openDashboardBtn" class="ghost-btn" type="button">Research Dashboard</button>
-          <button id="openBuilderBtn" class="ghost-btn" type="button">Dataset Builder</button>
-        </div>
       </header>
 
       <section id="consentView" class="view active">
@@ -28,8 +24,8 @@
           <p class="eyebrow">Research Prototype</p>
           <h2>Can you spot AI images in a swipe challenge?</h2>
           <p>
-            This study asks you to classify visual content as AI-generated or real. Your responses
-            are anonymous unless you choose to share identifying details.
+            This prototype was developed by <a href="mailto:kara.hosford@ucc.ie?subject=Survery%20Swipe%20Testing%20Tool%20-%20Prototype">Dr. Kara Hosford</a> and asks you to classify visual content as AI-generated or real. Your responses
+            are anonymous and all data is saved localy on your device.
           </p>
           <ul class="info-list">
             <li>Swipe left for AI-generated.</li>
@@ -40,8 +36,8 @@
           <div class="consent-box">
             <h3>Information & Consent</h3>
             <p>
-              Participation is voluntary. You can stop at any point by closing the page. Data is
-              stored locally in your browser until exported by the research team.
+              This is a prototype and subject to potential bugs. Participation is voluntary. You can stop at any point by closing the page. Data is
+              stored localy in your browser..
             </p>
             <label class="check-row">
               <input id="consentCheckbox" type="checkbox" />
@@ -181,7 +177,6 @@
             <button id="playAgainBtn" class="primary-btn" type="button">Play Again</button>
           </div>
           <div class="research-row">
-            <button id="openDashboardFromResultBtn" class="ghost-btn" type="button">Research: Open Dashboard</button>
             <button id="downloadAllBtn" class="ghost-btn" type="button">Research: Download All Local Sessions</button>
             <button id="clearAllBtn" class="ghost-btn" type="button">Research: Clear Local Sessions</button>
           </div>
@@ -281,56 +276,13 @@
         </div>
       </section>
 
-      <section id="builderView" class="view">
-        <div class="panel">
-          <p class="eyebrow">Research Utility</p>
-          <h2>Dataset Builder</h2>
-          <p>Create or include your own image cards. Saved locally in this browser.</p>
-
-          <form id="builderForm" class="grid-form">
-            <label>
-              Card Title
-              <input name="title" required placeholder="e.g. Studio portrait" />
-            </label>
-            <label class="full-width">
-              Ad Description
-              <input
-                name="description"
-                maxlength="240"
-                placeholder="e.g. Limited-time offer featuring a family home in daylight."
-              />
-            </label>
-            <label>
-              Ground Truth
-              <select name="truth" required>
-                <option value="">Select...</option>
-                <option value="ai">AI-generated</option>
-                <option value="real">Real</option>
-              </select>
-            </label>
-            <label class="full-width">
-              Choose Image File(s)
-              <input name="imageFile" type="file" accept="image/*" multiple required />
-            </label>
-          </form>
-
-          <div class="button-row">
-            <button id="addCardBtn" class="primary-btn" type="button">Add Card</button>
-            <button id="exportDatasetBtn" class="ghost-btn" type="button">Export Dataset JSON</button>
-            <label class="import-label ghost-btn">
-              Import Dataset JSON / ZIP
-              <input id="importDatasetInput" type="file" accept="application/json,.zip" hidden />
-            </label>
-            <button id="resetDatasetBtn" class="ghost-btn" type="button">Reset To Default</button>
-            <button id="closeBuilderBtn" class="ghost-btn" type="button">Back To Start</button>
-          </div>
-
-          <div id="builderList" class="builder-list"></div>
-        </div>
-      </section>
+      <div class="bottom-dashboard-bar">
+        <button id="openDashboardBtn" class="ghost-btn bottom-dashboard-btn" type="button">
+          Research Dashboard
+        </button>
+      </div>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="app.js" defer></script>
   </body>
 </html>

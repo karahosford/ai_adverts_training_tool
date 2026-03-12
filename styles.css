@@ -79,12 +79,20 @@ p {
   margin-bottom: 10px;
 }
 
-.topbar-actions {
-  margin-top: 0;
-}
-
 .topbar h1 {
   font-size: clamp(1.3rem, 2.8vw, 2rem);
+}
+
+.bottom-dashboard-bar {
+  margin-top: 18px;
+  padding: 8px 0 0;
+  display: flex;
+  justify-content: center;
+}
+
+.bottom-dashboard-btn {
+  min-width: min(420px, 100%);
+  box-shadow: 0 12px 28px rgba(18, 20, 29, 0.16);
 }
 
 .title-link {
@@ -549,5 +557,13 @@ button {
 
   .button-row {
     gap: 8px;
+  }
+
+  .bottom-dashboard-bar {
+    padding-top: 0;
+  }
+
+  .bottom-dashboard-btn {
+    width: 100%;
   }
 }

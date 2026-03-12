@@ -1,6 +1,5 @@
 const STORAGE_KEYS = {
   sessions: "sts_sessions_v1",
-  customDataset: "sts_custom_dataset_v1",
 };
 
 const DEFAULT_DATASET_FALLBACK = {
@@ -64,7 +63,6 @@ const views = {
   game: document.getElementById("gameView"),
   result: document.getElementById("resultView"),
   dashboard: document.getElementById("dashboardView"),
-  builder: document.getElementById("builderView"),
 };
 
 const ui = {
@@ -96,7 +94,6 @@ const ui = {
   downloadSessionBtn: document.getElementById("downloadSessionBtn"),
   downloadCsvBtn: document.getElementById("downloadCsvBtn"),
   playAgainBtn: document.getElementById("playAgainBtn"),
-  openDashboardFromResultBtn: document.getElementById("openDashboardFromResultBtn"),
   downloadAllBtn: document.getElementById("downloadAllBtn"),
   clearAllBtn: document.getElementById("clearAllBtn"),
 
@@ -116,15 +113,6 @@ const ui = {
   dashTN: document.getElementById("dashTN"),
   dashSegmentBody: document.getElementById("dashSegmentBody"),
   dashEmptyState: document.getElementById("dashEmptyState"),
-
-  openBuilderBtn: document.getElementById("openBuilderBtn"),
-  closeBuilderBtn: document.getElementById("closeBuilderBtn"),
-  builderForm: document.getElementById("builderForm"),
-  addCardBtn: document.getElementById("addCardBtn"),
-  exportDatasetBtn: document.getElementById("exportDatasetBtn"),
-  importDatasetInput: document.getElementById("importDatasetInput"),
-  resetDatasetBtn: document.getElementById("resetDatasetBtn"),
-  builderList: document.getElementById("builderList"),
 };
 
 const state = {
@@ -200,54 +188,6 @@ function resolveImageSrc(src) {
     return `${window.location.origin}${src}`;
   }
   return new URL(src, window.location.href).href;
-}
-
-function fileNameFromPath(path) {
-  const normalized = String(path || "").split("?")[0].split("#")[0];
-  const parts = normalized.split("/");
-  return parts[parts.length - 1] || "";
-}
-
-function mergeDescriptionsFromDefault(customDataset, defaultDataset) {
-  if (!customDataset || !Array.isArray(customDataset.items)) return customDataset;
-  if (!defaultDataset || !Array.isArray(defaultDataset.items)) return customDataset;
-
-  const byId = new Map();
-  const byTitle = new Map();
-  const byImageName = new Map();
-
-  defaultDataset.items.forEach((item) => {
-    const description = String(item.description || "").trim();
-    if (!description) return;
-
-    if (item.id) byId.set(String(item.id), description);
-    if (item.title) byTitle.set(String(item.title).trim().toLowerCase(), description);
-
-    getCardImages(item).forEach((imagePath) => {
-      const imageName = fileNameFromPath(imagePath).toLowerCase();
-      if (imageName) byImageName.set(imageName, description);
-    });
-  });
-
-  return {
-    ...customDataset,
-    items: customDataset.items.map((item) => {
-      const existing = String(item.description || "").trim();
-      if (existing) return item;
-
-      const byIdMatch = item.id ? byId.get(String(item.id)) : "";
-      const byTitleMatch = item.title ? byTitle.get(String(item.title).trim().toLowerCase()) : "";
-      const byImageMatch = getCardImages(item)
-        .map((path) => byImageName.get(fileNameFromPath(path).toLowerCase()))
-        .find(Boolean);
-
-      const mergedDescription = byIdMatch || byTitleMatch || byImageMatch || "";
-      return {
-        ...item,
-        description: mergedDescription,
-      };
-    }),
-  };
 }
 
 function showView(viewName) {
@@ -470,77 +410,22 @@ function openDashboard() {
 }
 
 async function loadDataset() {
-  let defaultDataset = null;
   try {
     const response = await fetch("data/default-dataset.json");
     if (!response.ok) {
       throw new Error(`Default dataset request failed with ${response.status}`);
     }
-    defaultDataset = normalizeDataset(await response.json());
+    state.dataset = normalizeDataset(await response.json());
   } catch {
     // Fallback keeps the app functional when opened via file:// or when fetch paths fail.
-    defaultDataset = normalizeDataset(DEFAULT_DATASET_FALLBACK);
+    state.dataset = normalizeDataset(DEFAULT_DATASET_FALLBACK);
   }
-
-  const customRaw = localStorage.getItem(STORAGE_KEYS.customDataset);
-  if (customRaw) {
-    try {
-      const customDataset = normalizeDataset(JSON.parse(customRaw));
-      state.dataset = mergeDescriptionsFromDefault(customDataset, defaultDataset);
-      renderBuilderList();
-      return;
-    } catch {
-      localStorage.removeItem(STORAGE_KEYS.customDataset);
-    }
-  }
-
-  state.dataset = defaultDataset;
-  renderBuilderList();
-}
-
-function saveCustomDataset() {
-  localStorage.setItem(STORAGE_KEYS.customDataset, JSON.stringify(state.dataset));
-  renderBuilderList();
-}
-
-function renderBuilderList() {
-  if (!state.dataset || !Array.isArray(state.dataset.items)) {
-    ui.builderList.innerHTML = "<p>No dataset loaded.</p>";
-    return;
-  }
-
-  const rows = state.dataset.items
-    .map(
-      (item, index) => `
-      <article class="builder-item">
-        <img src="${resolveImageSrc(getCardImages(item)[0])}" alt="${item.title}" />
-        <div>
-          <strong>${item.title}</strong>
-          <span class="tag ${item.truth}">${item.truth.toUpperCase()}</span>
-          <span class="image-count-tag">${getCardImages(item).length} images</span>
-          <p>ID: ${item.id}</p>
-        </div>
-        <button class="ghost-btn" data-remove-index="${index}" type="button">Remove</button>
-      </article>
-    `,
-    )
-    .join("");
-
-  ui.builderList.innerHTML = rows;
-
-  ui.builderList.querySelectorAll("[data-remove-index]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const index = Number(btn.getAttribute("data-remove-index"));
-      state.dataset.items.splice(index, 1);
-      saveCustomDataset();
-    });
-  });
 }
 
 function beginGame() {
   if (!state.dataset || !Array.isArray(state.dataset.items) || state.dataset.items.length < 3) {
     alert("Please provide at least 3 dataset cards before starting.");
-    showView("builder");
+    showView("consent");
     return;
   }
 
@@ -746,86 +631,6 @@ function convertSessionToCsv(session) {
   return [header, ...rows].map((row) => row.map(toCsvCell).join(",")).join("\n");
 }
 
-function getExtFromDataUrl(dataUrl) {
-  const match = dataUrl.match(/^data:image\/(\w+);/);
-  const raw = match ? match[1] : "png";
-  return raw === "jpeg" ? "jpg" : raw;
-}
-
-async function exportDatasetAsZip(dataset) {
-  const zip = new JSZip();
-
-  const exportItems = dataset.items.map((item) => {
-    const images = getCardImages(item);
-    const exportImages = images.map((src, idx) => {
-      if (src.startsWith("data:")) {
-        return `images/${item.id}-${idx}.${getExtFromDataUrl(src)}`;
-      }
-      return src;
-    });
-    return { ...item, image: exportImages[0] ?? item.image, images: exportImages };
-  });
-
-  dataset.items.forEach((item) => {
-    getCardImages(item).forEach((src, idx) => {
-      if (!src.startsWith("data:")) return;
-      const ext = getExtFromDataUrl(src);
-      const filename = `images/${item.id}-${idx}.${ext}`;
-      zip.file(filename, src.split(",")[1], { base64: true });
-    });
-  });
-
-  zip.file("dataset.json", JSON.stringify({ ...dataset, items: exportItems }, null, 2));
-
-  const blob = await zip.generateAsync({ type: "blob" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "dataset-export.zip";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-async function importDatasetFromZip(file) {
-  const zip = await JSZip.loadAsync(file);
-  const jsonEntry = zip.file("dataset.json");
-  if (!jsonEntry) throw new Error("No dataset.json found in the ZIP file.");
-
-  const text = await jsonEntry.async("text");
-  const parsed = JSON.parse(text);
-  if (!Array.isArray(parsed.items)) {
-    throw new Error("dataset.json must include an items array.");
-  }
-
-  for (const item of parsed.items) {
-    const images =
-      Array.isArray(item.images) && item.images.length > 0
-        ? item.images
-        : item.image
-          ? [item.image]
-          : [];
-
-    const resolved = await Promise.all(
-      images.map(async (src) => {
-        if (src.startsWith("data:") || /^https?:\/\//.test(src)) return src;
-        const entry = zip.file(src);
-        if (!entry) return src;
-        const b64 = await entry.async("base64");
-        const ext = src.split(".").pop().toLowerCase();
-        const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
-        return `data:${mime};base64,${b64}`;
-      }),
-    );
-
-    item.image = resolved[0] ?? item.image;
-    item.images = resolved;
-  }
-
-  return normalizeDataset(parsed);
-}
-
 function bindSwipe() {
   const choiceThreshold = 90;
   const imageThreshold = 50;
@@ -970,7 +775,6 @@ function bindEvents() {
   });
 
   ui.openDashboardBtn.addEventListener("click", () => openDashboard());
-  ui.openDashboardFromResultBtn.addEventListener("click", () => openDashboard());
   ui.closeDashboardBtn.addEventListener("click", () => showView("consent"));
   ui.resetDashboardFiltersBtn.addEventListener("click", () => {
     ui.filterAgeGroup.value = "all";
@@ -983,96 +787,7 @@ function bindEvents() {
     select.addEventListener("change", () => renderDashboard());
   });
 
-  ui.openBuilderBtn.addEventListener("click", () => showView("builder"));
-  ui.closeBuilderBtn.addEventListener("click", () => showView("consent"));
-
-  ui.addCardBtn.addEventListener("click", async () => {
-    if (!ui.builderForm.checkValidity()) {
-      ui.builderForm.reportValidity();
-      return;
-    }
-
-    const data = new FormData(ui.builderForm);
-    const selectedFiles = data
-      .getAll("imageFile")
-      .filter((file) => file instanceof File && file.size > 0);
-    if (selectedFiles.length === 0) return;
-
-    const imageDataUrls = await Promise.all(selectedFiles.map((file) => fileToDataUrl(file)));
-    const title = String(data.get("title") || "Untitled");
-    const description = String(data.get("description") || "").trim();
-    const truth = String(data.get("truth") || "ai");
-    const id = `${truth}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-    state.dataset.items.push({
-      id,
-      title,
-      description,
-      truth,
-      image: imageDataUrls[0],
-      images: imageDataUrls,
-      source: "Uploaded by researcher",
-    });
-
-    saveCustomDataset();
-    ui.builderForm.reset();
-  });
-
-  ui.exportDatasetBtn.addEventListener("click", async () => {
-    if (!state.dataset) return;
-    const hasLocalImages = state.dataset.items.some((item) =>
-      getCardImages(item).some((src) => src.startsWith("data:")),
-    );
-    if (hasLocalImages) {
-      await exportDatasetAsZip(state.dataset);
-    } else {
-      downloadFile("dataset-export.json", JSON.stringify(state.dataset, null, 2), "application/json");
-    }
-  });
-
-  ui.importDatasetInput.addEventListener("change", async (event) => {
-    const target = event.target;
-    const file = target.files?.[0];
-    if (!file) return;
-
-    try {
-      let dataset;
-      if (file.name.toLowerCase().endsWith(".zip")) {
-        dataset = await importDatasetFromZip(file);
-      } else {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        if (!Array.isArray(parsed.items)) {
-          throw new Error("Dataset JSON must include an items array.");
-        }
-        dataset = normalizeDataset(parsed);
-      }
-      state.dataset = dataset;
-      saveCustomDataset();
-      alert("Dataset imported.");
-    } catch (error) {
-      alert(`Import failed: ${error.message}`);
-    } finally {
-      target.value = "";
-    }
-  });
-
-  ui.resetDatasetBtn.addEventListener("click", async () => {
-    localStorage.removeItem(STORAGE_KEYS.customDataset);
-    await loadDataset();
-    alert("Dataset reset to default.");
-  });
-
   bindSwipe();
-}
-
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Could not read image file."));
-    reader.readAsDataURL(file);
-  });
 }
 
 async function init() {
