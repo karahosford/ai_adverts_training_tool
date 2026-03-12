@@ -74,15 +74,23 @@ const ui = {
 
   swipeCard: document.getElementById("swipeCard"),
   cardImage: document.getElementById("cardImage"),
+  choiceTint: document.getElementById("choiceTint"),
   cardImageCounter: document.getElementById("cardImageCounter"),
   imagePrevBtn: document.getElementById("imagePrevBtn"),
   imageNextBtn: document.getElementById("imageNextBtn"),
   cardTitle: document.getElementById("cardTitle"),
+  cardPrice: document.getElementById("cardPrice"),
   cardDescription: document.getElementById("cardDescription"),
+  cardDescriptionMoreBtn: document.getElementById("cardDescriptionMoreBtn"),
   leftHint: document.getElementById("leftHint"),
   rightHint: document.getElementById("rightHint"),
   guessAiBtn: document.getElementById("guessAiBtn"),
   guessRealBtn: document.getElementById("guessRealBtn"),
+
+  descriptionOverlay: document.getElementById("descriptionOverlay"),
+  descriptionOverlayBackdrop: document.getElementById("descriptionOverlayBackdrop"),
+  descriptionOverlayText: document.getElementById("descriptionOverlayText"),
+  closeDescriptionOverlayBtn: document.getElementById("closeDescriptionOverlayBtn"),
 
   finalHeadline: document.getElementById("finalHeadline"),
   finalSummary: document.getElementById("finalSummary"),
@@ -94,6 +102,8 @@ const ui = {
   playAgainBtn: document.getElementById("playAgainBtn"),
   downloadAllBtn: document.getElementById("downloadAllBtn"),
   clearAllBtn: document.getElementById("clearAllBtn"),
+  wrongAnswersSection: document.getElementById("wrongAnswersSection"),
+  wrongAnswersGrid: document.getElementById("wrongAnswersGrid"),
 
   openDashboardBtn: document.getElementById("openDashboardBtn"),
   closeDashboardBtn: document.getElementById("closeDashboardBtn"),
@@ -131,7 +141,47 @@ const state = {
     deltaX: 0,
     mode: "choice",
   },
+  overlayOpen: false,
 };
+
+function normalizeCardText(value, fallback = "") {
+  const normalized = String(value || "").trim();
+  return normalized || fallback;
+}
+
+function extractPriceAndDescription(item) {
+  const descriptionRaw = normalizeCardText(item?.description, "");
+  const explicitPrice = normalizeCardText(item?.price, "");
+
+  if (explicitPrice) {
+    return {
+      price: explicitPrice,
+      description: descriptionRaw,
+    };
+  }
+
+  const leadingPriceMatch = descriptionRaw.match(
+    /^((?:EUR|USD|GBP)\s?\d[\d.,]*|[€$£]\s?\d[\d.,]*)\s*[-:|]\s*/i,
+  );
+
+  if (!leadingPriceMatch) {
+    return {
+      price: "Not listed",
+      description: descriptionRaw,
+    };
+  }
+
+  const extractedPrice = normalizeCardText(leadingPriceMatch[1], "Not listed");
+  const trimmedDescription = normalizeCardText(
+    descriptionRaw.slice(leadingPriceMatch[0].length),
+    descriptionRaw,
+  );
+
+  return {
+    price: extractedPrice,
+    description: trimmedDescription,
+  };
+}
 
 function normalizeDataset(rawDataset) {
   const dataset = rawDataset && typeof rawDataset === "object" ? rawDataset : {};
@@ -156,9 +206,12 @@ function normalizeDataset(rawDataset) {
       const uniqueImages = [...new Set(imageList)];
       if (uniqueImages.length === 0) return null;
 
+      const textMeta = extractPriceAndDescription(item);
+
       return {
         ...item,
-        description: String(item?.description || "").trim(),
+        price: textMeta.price,
+        description: textMeta.description,
         image: uniqueImages[0],
         images: uniqueImages,
       };
@@ -447,6 +500,31 @@ function preloadCardImages(cardIndex) {
   });
 }
 
+function updateDescriptionOverflowControl() {
+  if (!ui.cardDescription || !ui.cardDescriptionMoreBtn) return;
+  requestAnimationFrame(() => {
+    const hasOverflow = ui.cardDescription.scrollHeight - ui.cardDescription.clientHeight > 1;
+    ui.cardDescriptionMoreBtn.hidden = !hasOverflow;
+  });
+}
+
+function openDescriptionOverlay() {
+  const card = state.activeCards[state.currentIndex];
+  if (!card) return;
+
+  const fullDescription = normalizeCardText(card.description, "No description provided for this ad.");
+  ui.descriptionOverlayText.textContent = fullDescription;
+  ui.descriptionOverlay.hidden = false;
+  state.overlayOpen = true;
+  document.body.style.overflow = "hidden";
+}
+
+function closeDescriptionOverlay() {
+  ui.descriptionOverlay.hidden = true;
+  state.overlayOpen = false;
+  document.body.style.overflow = "";
+}
+
 function renderCurrentCard() {
   const card = state.activeCards[state.currentIndex];
   if (!card) {
@@ -457,8 +535,12 @@ function renderCurrentCard() {
   state.currentImageIndex = 0;
   renderCardImage();
   ui.cardTitle.textContent = card.title;
+  ui.cardPrice.textContent = `Price: ${normalizeCardText(card.price, "Not listed")}`;
   ui.cardDescription.textContent =
-    String(card.description || "").trim() || "No description provided for this ad.";
+    normalizeCardText(card.description, "No description provided for this ad.");
+  ui.cardDescriptionMoreBtn.hidden = true;
+  closeDescriptionOverlay();
+  updateDescriptionOverflowControl();
   resetCardTransform();
   state.cardStartedAt = Date.now();
 
@@ -557,8 +639,58 @@ function resetCardTransform() {
   ui.swipeCard.style.transform = "translateX(0) rotate(0deg)";
   ui.cardImage.style.transition = "transform 180ms ease";
   ui.cardImage.style.transform = "translateX(0)";
+  ui.choiceTint.style.opacity = "0";
+  ui.choiceTint.classList.remove("ai", "real");
   ui.leftHint.style.opacity = "0";
   ui.rightHint.style.opacity = "0";
+}
+
+function getCardPrimaryImage(card) {
+  const images = getCardImages(card);
+  if (images.length === 0) return "";
+  return resolveImageSrc(images[0]);
+}
+
+function renderWrongAnswers(session) {
+  const wrongResponses = (session.responses || []).filter((response) => !response.correct);
+  ui.wrongAnswersGrid.innerHTML = "";
+
+  if (wrongResponses.length === 0) {
+    ui.wrongAnswersSection.hidden = true;
+    return;
+  }
+
+  wrongResponses.forEach((response) => {
+    const sourceCard = state.dataset?.items?.find((item) => item.id === response.itemId);
+    const item = document.createElement("article");
+    item.className = "wrong-answer-item";
+
+    const imageSrc = getCardPrimaryImage(sourceCard);
+    if (imageSrc) {
+      const image = document.createElement("img");
+      image.src = imageSrc;
+      image.alt = `${response.title || "Item"} preview`;
+      item.appendChild(image);
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "wrong-answer-meta";
+
+    const title = document.createElement("p");
+    title.className = "wrong-answer-title";
+    title.textContent = response.title || "Untitled item";
+
+    const detail = document.createElement("p");
+    detail.className = "wrong-answer-detail";
+    detail.textContent = `You chose ${String(response.userChoice || "").toUpperCase()} | Actual ${String(response.truth || "").toUpperCase()}`;
+
+    meta.appendChild(title);
+    meta.appendChild(detail);
+    item.appendChild(meta);
+    ui.wrongAnswersGrid.appendChild(item);
+  });
+
+  ui.wrongAnswersSection.hidden = false;
 }
 
 function registerChoice(choice) {
@@ -592,6 +724,9 @@ function animateChoice(choice, onDone) {
   ui.swipeCard.style.transform = `translateX(${direction * 380}px) rotate(${direction * 18}deg)`;
   ui.leftHint.style.opacity = choice === "ai" ? "1" : "0";
   ui.rightHint.style.opacity = choice === "real" ? "1" : "0";
+  ui.choiceTint.classList.remove("ai", "real");
+  ui.choiceTint.classList.add(choice);
+  ui.choiceTint.style.opacity = "0.82";
   setTimeout(onDone, 220);
 }
 
@@ -632,6 +767,7 @@ function finishGame() {
   ui.correctCount.textContent = `${state.correct} / ${total}`;
   ui.avgTime.textContent = `${(avgTimeMs / 1000).toFixed(1)}s`;
   ui.percentile.textContent = percentileLabel(percentile);
+  renderWrongAnswers(session);
 
   showView("result");
 }
@@ -726,6 +862,11 @@ function bindSwipe() {
     const opacity = Math.min(Math.abs(state.pointer.deltaX) / choiceThreshold, 1);
     ui.leftHint.style.opacity = state.pointer.deltaX < 0 ? String(opacity) : "0";
     ui.rightHint.style.opacity = state.pointer.deltaX > 0 ? String(opacity) : "0";
+
+    const tintClass = state.pointer.deltaX < 0 ? "ai" : "real";
+    ui.choiceTint.classList.remove("ai", "real");
+    ui.choiceTint.classList.add(tintClass);
+    ui.choiceTint.style.opacity = String(Math.min(opacity * 0.68, 0.68));
   });
 
   const endPointer = () => {
@@ -787,6 +928,21 @@ function bindEvents() {
   ui.imageNextBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     moveCardImage(1);
+  });
+
+  ui.cardDescriptionMoreBtn.addEventListener("click", () => openDescriptionOverlay());
+  ui.closeDescriptionOverlayBtn.addEventListener("click", () => closeDescriptionOverlay());
+  ui.descriptionOverlayBackdrop.addEventListener("click", () => closeDescriptionOverlay());
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.overlayOpen) {
+      closeDescriptionOverlay();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!views.game.classList.contains("active")) return;
+    updateDescriptionOverflowControl();
   });
 
   [ui.imagePrevBtn, ui.imageNextBtn].forEach((btn) => {

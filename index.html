@@ -127,6 +127,7 @@
             <article id="swipeCard" class="swipe-card">
               <div class="image-stage">
                 <img id="cardImage" alt="Challenge image" />
+                <div id="choiceTint" class="choice-tint" aria-hidden="true"></div>
                 <button id="imagePrevBtn" class="image-nav-btn image-nav-prev" type="button" hidden aria-label="Previous image">&#8249;</button>
                 <button id="imageNextBtn" class="image-nav-btn image-nav-next" type="button" hidden aria-label="Next image">&#8250;</button>
                 <span id="cardImageCounter" class="image-counter" hidden>1 / 1</span>
@@ -135,7 +136,11 @@
               </div>
               <div class="card-meta">
                 <h3 id="cardTitle"></h3>
-                <p id="cardDescription">No description provided for this ad.</p>
+                <p id="cardPrice" class="card-price">Price: Not listed</p>
+                <p id="cardDescription" class="card-description">No description provided for this ad.</p>
+                <button id="cardDescriptionMoreBtn" class="inline-more-btn" type="button" hidden>
+                  See more
+                </button>
               </div>
             </article>
           </div>
@@ -146,6 +151,22 @@
           </div>
         </div>
       </section>
+
+      <div id="descriptionOverlay" class="description-overlay" hidden>
+        <div id="descriptionOverlayBackdrop" class="description-overlay-backdrop"></div>
+        <article
+          class="description-overlay-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="descriptionOverlayTitle"
+        >
+          <h3 id="descriptionOverlayTitle">Full Description</h3>
+          <p id="descriptionOverlayText"></p>
+          <div class="button-row">
+            <button id="closeDescriptionOverlayBtn" class="primary-btn" type="button">Close</button>
+          </div>
+        </article>
+      </div>
 
       <section id="resultView" class="view">
         <div class="panel glass">
@@ -175,6 +196,10 @@
             <button id="downloadAllBtn" class="ghost-btn" type="button">Research: Download All Local Sessions</button>
             <button id="clearAllBtn" class="ghost-btn" type="button">Research: Clear Local Sessions</button>
           </div>
+          <section id="wrongAnswersSection" class="wrong-answers" hidden>
+            <h3 class="section-heading">Items You Got Wrong</h3>
+            <div id="wrongAnswersGrid" class="wrong-answers-grid"></div>
+          </section>
         </div>
       </section>
 
