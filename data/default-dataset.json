@@ -1,59 +1,76 @@
 {
-  "name": "Starter Demo Set",
-  "version": "1.0",
+  "name": "Ad Image Validation Set",
+  "version": "1.1",
   "items": [
     {
-      "id": "real-1773307868472-9",
-      "title": "G6 ipad 64gb white",
+      "id": "ipad-real",
+      "title": "G6 ipad White 64GB",
+      "description": "€200 - generation 6 ipad with folio case and Apple gen 1 pencil, with charger",
       "truth": "real",
-      "image": "assets/images/ipad_r2.jpeg",
+      "image": "assets/images/ipad_r.jpeg",
       "images": [
-        "assets/images/ipad_r2.jpeg",
-        "assets/images/ipad_r.jpeg"
+        "assets/images/ipad_r.jpeg",
+        "assets/images/ipad_r2.jpeg"
       ],
-      "source": "Uploaded by researcher"
+      "source": "Curated local assets"
     },
     {
-      "id": "ai-1773307917847-313",
-      "title": "iPad 128gb with case",
+      "id": "ipad-ai",
+      "title": "White iPad 128GB",
+      "description": "€130 - Slightly worn iPad with minor scratches on the screen.",
       "truth": "ai",
-      "image": "images/ai-1773307917847-313-0.png",
+      "image": "assets/images/ipad_g.png",
       "images": [
-        "images/ai-1773307917847-313-0.png",
-        "images/ai-1773307917847-313-1.png"
+        "assets/images/ipad_g.png",
+        "assets/images/ipad_g2.png"
       ],
-      "source": "Uploaded by researcher"
+      "source": "Curated local assets"
     },
     {
-      "id": "real-1773307945714-128",
-      "title": "Stadia Controller with Bluetooth enabled",
+      "id": "stadia-real",
+      "title": "Stadia Controller",
+      "description": "€30 - White Stadia controller in good condition with firmware update",
       "truth": "real",
-      "image": "images/real-1773307945714-128-0.jpg",
+      "image": "assets/images/stadia_r.jpeg",
       "images": [
-        "images/real-1773307945714-128-0.jpg"
+        "assets/images/stadia_r.jpeg"
       ],
-      "source": "Uploaded by researcher"
+      "source": "Curated local assets"
     },
     {
-      "id": "ai-1773307961484-850",
-      "title": "Stadia Pro Gaming Controller",
+      "id": "stadia-ai",
+      "title": "Stadia Controller - Pro Gaming Controller",
+      "description": "€30 - Google Stadia Controller for Pro Gaming PC/Xbox/PS5/Switch",
       "truth": "ai",
-      "image": "images/ai-1773307961484-850-0.png",
+      "image": "assets/images/stadia_g.png",
       "images": [
-        "images/ai-1773307961484-850-0.png"
+        "assets/images/stadia_g.png"
       ],
-      "source": "Uploaded by researcher"
+      "source": "Curated local assets"
     },
     {
-      "id": "ai-1773307996318-875",
-      "title": "Steamdeck OLED 512gb with faceplate",
-      "truth": "ai",
-      "image": "images/ai-1773307996318-875-0.png",
+      "id": "steamdeck-real",
+      "title": "Steam Deck LCD",
+      "description": "€300 - Steamdeck with 256gb storage, in good condition with original packaging and and faceshield case",
+      "truth": "real",
+      "image": "assets/images/steamdeck_r.jpeg",
       "images": [
-        "images/ai-1773307996318-875-0.png",
-        "images/ai-1773307996318-875-1.png"
+        "assets/images/steamdeck_r.jpeg",
+        "assets/images/steamdeck_r2.jpeg"
       ],
-      "source": "Uploaded by researcher"
+      "source": "Curated local assets"
+    },
+    {
+      "id": "steamdeck-ai",
+      "title": "Steam Deck OLED 512GB",
+      "description": "€340 - STEAM Steamdeck OLED 512GB with accessories.",
+      "truth": "ai",
+      "image": "assets/images/steamdeck_g.png",
+      "images": [
+        "assets/images/steamdeck_g.png",
+        "assets/images/steamdeck_g2.png"
+      ],
+      "source": "Curated local assets"
     }
   ]
 }

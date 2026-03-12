@@ -202,6 +202,54 @@ function resolveImageSrc(src) {
   return new URL(src, window.location.href).href;
 }
 
+function fileNameFromPath(path) {
+  const normalized = String(path || "").split("?")[0].split("#")[0];
+  const parts = normalized.split("/");
+  return parts[parts.length - 1] || "";
+}
+
+function mergeDescriptionsFromDefault(customDataset, defaultDataset) {
+  if (!customDataset || !Array.isArray(customDataset.items)) return customDataset;
+  if (!defaultDataset || !Array.isArray(defaultDataset.items)) return customDataset;
+
+  const byId = new Map();
+  const byTitle = new Map();
+  const byImageName = new Map();
+
+  defaultDataset.items.forEach((item) => {
+    const description = String(item.description || "").trim();
+    if (!description) return;
+
+    if (item.id) byId.set(String(item.id), description);
+    if (item.title) byTitle.set(String(item.title).trim().toLowerCase(), description);
+
+    getCardImages(item).forEach((imagePath) => {
+      const imageName = fileNameFromPath(imagePath).toLowerCase();
+      if (imageName) byImageName.set(imageName, description);
+    });
+  });
+
+  return {
+    ...customDataset,
+    items: customDataset.items.map((item) => {
+      const existing = String(item.description || "").trim();
+      if (existing) return item;
+
+      const byIdMatch = item.id ? byId.get(String(item.id)) : "";
+      const byTitleMatch = item.title ? byTitle.get(String(item.title).trim().toLowerCase()) : "";
+      const byImageMatch = getCardImages(item)
+        .map((path) => byImageName.get(fileNameFromPath(path).toLowerCase()))
+        .find(Boolean);
+
+      const mergedDescription = byIdMatch || byTitleMatch || byImageMatch || "";
+      return {
+        ...item,
+        description: mergedDescription,
+      };
+    }),
+  };
+}
+
 function showView(viewName) {
   Object.values(views).forEach((view) => view.classList.remove("active"));
   views[viewName].classList.add("active");
@@ -422,10 +470,23 @@ function openDashboard() {
 }
 
 async function loadDataset() {
+  let defaultDataset = null;
+  try {
+    const response = await fetch("data/default-dataset.json");
+    if (!response.ok) {
+      throw new Error(`Default dataset request failed with ${response.status}`);
+    }
+    defaultDataset = normalizeDataset(await response.json());
+  } catch {
+    // Fallback keeps the app functional when opened via file:// or when fetch paths fail.
+    defaultDataset = normalizeDataset(DEFAULT_DATASET_FALLBACK);
+  }
+
   const customRaw = localStorage.getItem(STORAGE_KEYS.customDataset);
   if (customRaw) {
     try {
-      state.dataset = normalizeDataset(JSON.parse(customRaw));
+      const customDataset = normalizeDataset(JSON.parse(customRaw));
+      state.dataset = mergeDescriptionsFromDefault(customDataset, defaultDataset);
       renderBuilderList();
       return;
     } catch {
@@ -433,16 +494,7 @@ async function loadDataset() {
     }
   }
 
-  try {
-    const response = await fetch("data/default-dataset.json");
-    if (!response.ok) {
-      throw new Error(`Default dataset request failed with ${response.status}`);
-    }
-    state.dataset = normalizeDataset(await response.json());
-  } catch {
-    // Fallback keeps the app functional when opened via file:// or when fetch paths fail.
-    state.dataset = normalizeDataset(DEFAULT_DATASET_FALLBACK);
-  }
+  state.dataset = defaultDataset;
   renderBuilderList();
 }
 
