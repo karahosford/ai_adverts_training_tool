@@ -275,11 +275,68 @@ button {
   transition: transform 220ms ease;
 }
 
+.image-stage {
+  position: relative;
+  overflow: hidden;
+}
+
 .swipe-card img {
   width: 100%;
   height: min(58vh, 520px);
   object-fit: cover;
   background: #e6ebf4;
+}
+
+.image-counter {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(20, 22, 33, 0.72);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+.image-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  background: rgba(20, 22, 33, 0.55);
+  color: #fff;
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, opacity 150ms ease;
+  z-index: 10;
+  user-select: none;
+}
+
+.image-nav-btn:hover {
+  background: rgba(20, 22, 33, 0.82);
+}
+
+.image-nav-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.image-nav-prev {
+  left: 10px;
+}
+
+.image-nav-next {
+  right: 10px;
 }
 
 .card-meta {
@@ -454,6 +511,17 @@ button {
 .tag.real {
   color: #166534;
   background: #d9f9e1;
+}
+
+.image-count-tag {
+  display: inline-block;
+  margin-left: 6px;
+  color: #2c3f77;
+  background: #dfe8ff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {

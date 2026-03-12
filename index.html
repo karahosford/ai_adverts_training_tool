@@ -134,10 +134,15 @@
 
           <div id="cardWrap" class="card-wrap">
             <article id="swipeCard" class="swipe-card">
-              <img id="cardImage" alt="Challenge image" />
+              <div class="image-stage">
+                <img id="cardImage" alt="Challenge image" />
+                <button id="imagePrevBtn" class="image-nav-btn image-nav-prev" type="button" hidden aria-label="Previous image">&#8249;</button>
+                <button id="imageNextBtn" class="image-nav-btn image-nav-next" type="button" hidden aria-label="Next image">&#8250;</button>
+                <span id="cardImageCounter" class="image-counter" hidden>1 / 1</span>
+              </div>
               <div class="card-meta">
                 <h3 id="cardTitle"></h3>
-                <p>Swipe left = AI-generated | right = real</p>
+                <p id="cardInstruction">Swipe card left = AI-generated | right = real</p>
               </div>
               <span id="leftHint" class="swipe-hint left">AI</span>
               <span id="rightHint" class="swipe-hint right">REAL</span>
@@ -296,8 +301,8 @@
               </select>
             </label>
             <label class="full-width">
-              Choose Image File
-              <input name="imageFile" type="file" accept="image/*" required />
+              Choose Image File(s)
+              <input name="imageFile" type="file" accept="image/*" multiple required />
             </label>
           </form>
 
@@ -305,8 +310,8 @@
             <button id="addCardBtn" class="primary-btn" type="button">Add Card</button>
             <button id="exportDatasetBtn" class="ghost-btn" type="button">Export Dataset JSON</button>
             <label class="import-label ghost-btn">
-              Import Dataset JSON
-              <input id="importDatasetInput" type="file" accept="application/json" hidden />
+              Import Dataset JSON / ZIP
+              <input id="importDatasetInput" type="file" accept="application/json,.zip" hidden />
             </label>
             <button id="resetDatasetBtn" class="ghost-btn" type="button">Reset To Default</button>
             <button id="closeBuilderBtn" class="ghost-btn" type="button">Back To Start</button>
@@ -317,6 +322,7 @@
       </section>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="app.js" defer></script>
   </body>
 </html>

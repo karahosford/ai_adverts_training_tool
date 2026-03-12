@@ -3,46 +3,57 @@
   "version": "1.0",
   "items": [
     {
-      "id": "real-1",
-      "title": "Suburban House",
+      "id": "real-1773307868472-9",
+      "title": "G6 ipad 64gb white",
       "truth": "real",
-      "image": "assets/images/real-1.svg",
-      "source": "Prototype synthetic artwork"
+      "image": "images/real-1773307868472-9-0.jpg",
+      "images": [
+        "images/real-1773307868472-9-0.jpg",
+        "images/real-1773307868472-9-1.jpg"
+      ],
+      "source": "Uploaded by researcher"
     },
     {
-      "id": "real-2",
-      "title": "Rustic Cottage",
+      "id": "ai-1773307917847-313",
+      "title": "iPad 128gb with case",
+      "truth": "ai",
+      "image": "images/ai-1773307917847-313-0.png",
+      "images": [
+        "images/ai-1773307917847-313-0.png",
+        "images/ai-1773307917847-313-1.png"
+      ],
+      "source": "Uploaded by researcher"
+    },
+    {
+      "id": "real-1773307945714-128",
+      "title": "Stadia Controller with Bluetooth enabled",
       "truth": "real",
-      "image": "assets/images/real-2.svg",
-      "source": "Prototype synthetic artwork"
+      "image": "images/real-1773307945714-128-0.jpg",
+      "images": [
+        "images/real-1773307945714-128-0.jpg"
+      ],
+      "source": "Uploaded by researcher"
     },
     {
-      "id": "real-3",
-      "title": "Product Card Mockup",
-      "truth": "real",
-      "image": "assets/images/real-3.svg",
-      "source": "Prototype synthetic artwork"
-    },
-    {
-      "id": "ai-1",
-      "title": "Dream Portrait",
+      "id": "ai-1773307961484-850",
+      "title": "Stadia Pro Gaming Controller",
       "truth": "ai",
-      "image": "assets/images/ai-1.svg",
-      "source": "Prototype synthetic artwork"
+      "image": "images/ai-1773307961484-850-0.png",
+      "images": [
+        "images/ai-1773307961484-850-0.png"
+      ],
+      "source": "Uploaded by researcher"
     },
     {
-      "id": "ai-2",
-      "title": "Geometric Core",
+      "id": "ai-1773307996318-875",
+      "title": "Steamdeck OLED 512gb with faceplate",
       "truth": "ai",
-      "image": "assets/images/ai-2.svg",
-      "source": "Prototype synthetic artwork"
-    },
-    {
-      "id": "ai-3",
-      "title": "Neural Glow",
-      "truth": "ai",
-      "image": "assets/images/ai-3.svg",
-      "source": "Prototype synthetic artwork"
+      "image": "images/ai-1773307996318-875-0.png",
+      "images": [
+        "images/ai-1773307996318-875-0.png",
+        "images/ai-1773307996318-875-1.png"
+      ],
+      "source": "Uploaded by researcher"
     }
   ]
 }

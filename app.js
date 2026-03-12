@@ -23,7 +23,11 @@ const ui = {
   scoreLabel: document.getElementById("scoreLabel"),
   swipeCard: document.getElementById("swipeCard"),
   cardImage: document.getElementById("cardImage"),
+  cardImageCounter: document.getElementById("cardImageCounter"),
+  imagePrevBtn: document.getElementById("imagePrevBtn"),
+  imageNextBtn: document.getElementById("imageNextBtn"),
   cardTitle: document.getElementById("cardTitle"),
+  cardInstruction: document.getElementById("cardInstruction"),
   leftHint: document.getElementById("leftHint"),
   rightHint: document.getElementById("rightHint"),
   guessAiBtn: document.getElementById("guessAiBtn"),
@@ -76,6 +80,7 @@ const state = {
   profile: null,
   responses: [],
   cardStartedAt: 0,
+  currentImageIndex: 0,
   sessionStartedAt: 0,
   latestSession: null,
   swipeLock: false,
@@ -83,8 +88,54 @@ const state = {
     isDown: false,
     startX: 0,
     deltaX: 0,
+    mode: "choice",
   },
 };
+
+function normalizeDataset(rawDataset) {
+  const dataset = rawDataset && typeof rawDataset === "object" ? rawDataset : {};
+  const items = Array.isArray(dataset.items) ? dataset.items : [];
+
+  const normalizedItems = items
+    .map((item) => {
+      const imageList = [];
+
+      if (typeof item?.image === "string" && item.image.trim()) {
+        imageList.push(item.image.trim());
+      }
+
+      if (Array.isArray(item?.images)) {
+        item.images.forEach((image) => {
+          if (typeof image === "string" && image.trim()) {
+            imageList.push(image.trim());
+          }
+        });
+      }
+
+      const uniqueImages = [...new Set(imageList)];
+      if (uniqueImages.length === 0) return null;
+
+      return {
+        ...item,
+        image: uniqueImages[0],
+        images: uniqueImages,
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    name: dataset.name || "Untitled Dataset",
+    version: dataset.version || "1.0",
+    items: normalizedItems,
+  };
+}
+
+function getCardImages(card) {
+  if (!card) return [];
+  if (Array.isArray(card.images) && card.images.length > 0) return card.images;
+  if (typeof card.image === "string" && card.image.trim()) return [card.image];
+  return [];
+}
 
 function showView(viewName) {
   Object.values(views).forEach((view) => view.classList.remove("active"));
@@ -309,7 +360,7 @@ async function loadDataset() {
   const customRaw = localStorage.getItem(STORAGE_KEYS.customDataset);
   if (customRaw) {
     try {
-      state.dataset = JSON.parse(customRaw);
+      state.dataset = normalizeDataset(JSON.parse(customRaw));
       renderBuilderList();
       return;
     } catch {
@@ -318,7 +369,7 @@ async function loadDataset() {
   }
 
   const response = await fetch("data/default-dataset.json");
-  state.dataset = await response.json();
+  state.dataset = normalizeDataset(await response.json());
   renderBuilderList();
 }
 
@@ -337,10 +388,11 @@ function renderBuilderList() {
     .map(
       (item, index) => `
       <article class="builder-item">
-        <img src="${item.image}" alt="${item.title}" />
+        <img src="${getCardImages(item)[0]}" alt="${item.title}" />
         <div>
           <strong>${item.title}</strong>
           <span class="tag ${item.truth}">${item.truth.toUpperCase()}</span>
+          <span class="image-count-tag">${getCardImages(item).length} images</span>
           <p>ID: ${item.id}</p>
         </div>
         <button class="ghost-btn" data-remove-index="${index}" type="button">Remove</button>
@@ -372,6 +424,7 @@ function beginGame() {
   state.correct = 0;
   state.responses = [];
   state.sessionStartedAt = Date.now();
+  state.currentImageIndex = 0;
   state.swipeLock = false;
   showView("game");
   renderCurrentCard();
@@ -386,15 +439,62 @@ function renderCurrentCard() {
 
   ui.roundLabel.textContent = `Round ${state.currentIndex + 1} / ${state.activeCards.length}`;
   ui.scoreLabel.textContent = `Score: ${state.correct}`;
-  ui.cardImage.src = card.image;
+  state.currentImageIndex = 0;
+  renderCardImage();
   ui.cardTitle.textContent = card.title;
   resetCardTransform();
   state.cardStartedAt = Date.now();
 }
 
+function renderCardImage() {
+  const card = state.activeCards[state.currentIndex];
+  const images = getCardImages(card);
+  if (images.length === 0) {
+    ui.cardImage.removeAttribute("src");
+    ui.cardImageCounter.hidden = true;
+    ui.cardInstruction.textContent = "Use left/right actions to classify.";
+    return;
+  }
+
+  if (state.currentImageIndex >= images.length) {
+    state.currentImageIndex = images.length - 1;
+  }
+  if (state.currentImageIndex < 0) {
+    state.currentImageIndex = 0;
+  }
+
+  ui.cardImage.src = images[state.currentImageIndex];
+  const hasMultiple = images.length > 1;
+  ui.cardImageCounter.hidden = !hasMultiple;
+  ui.cardImageCounter.textContent = `${state.currentImageIndex + 1} / ${images.length}`;
+  ui.imagePrevBtn.hidden = !hasMultiple;
+  ui.imageNextBtn.hidden = !hasMultiple;
+  ui.imagePrevBtn.disabled = state.currentImageIndex === 0;
+  ui.imageNextBtn.disabled = state.currentImageIndex === images.length - 1;
+  ui.cardInstruction.textContent =
+    images.length > 1
+      ? "Swipe image left/right to browse | swipe card left = AI, right = real"
+      : "Swipe card left = AI-generated | right = real";
+}
+
+function moveCardImage(step) {
+  const card = state.activeCards[state.currentIndex];
+  const images = getCardImages(card);
+  if (images.length <= 1) return false;
+
+  const nextIndex = state.currentImageIndex + step;
+  if (nextIndex < 0 || nextIndex >= images.length) return false;
+
+  state.currentImageIndex = nextIndex;
+  renderCardImage();
+  return true;
+}
+
 function resetCardTransform() {
   ui.swipeCard.style.transition = "transform 180ms ease";
   ui.swipeCard.style.transform = "translateX(0) rotate(0deg)";
+  ui.cardImage.style.transition = "transform 180ms ease";
+  ui.cardImage.style.transform = "translateX(0)";
   ui.leftHint.style.opacity = "0";
   ui.rightHint.style.opacity = "0";
 }
@@ -522,25 +622,125 @@ function convertSessionToCsv(session) {
   return [header, ...rows].map((row) => row.map(toCsvCell).join(",")).join("\n");
 }
 
+function getExtFromDataUrl(dataUrl) {
+  const match = dataUrl.match(/^data:image\/(\w+);/);
+  const raw = match ? match[1] : "png";
+  return raw === "jpeg" ? "jpg" : raw;
+}
+
+async function exportDatasetAsZip(dataset) {
+  const zip = new JSZip();
+
+  const exportItems = dataset.items.map((item) => {
+    const images = getCardImages(item);
+    const exportImages = images.map((src, idx) => {
+      if (src.startsWith("data:")) {
+        return `images/${item.id}-${idx}.${getExtFromDataUrl(src)}`;
+      }
+      return src;
+    });
+    return { ...item, image: exportImages[0] ?? item.image, images: exportImages };
+  });
+
+  dataset.items.forEach((item) => {
+    getCardImages(item).forEach((src, idx) => {
+      if (!src.startsWith("data:")) return;
+      const ext = getExtFromDataUrl(src);
+      const filename = `images/${item.id}-${idx}.${ext}`;
+      zip.file(filename, src.split(",")[1], { base64: true });
+    });
+  });
+
+  zip.file("dataset.json", JSON.stringify({ ...dataset, items: exportItems }, null, 2));
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "dataset-export.zip";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function importDatasetFromZip(file) {
+  const zip = await JSZip.loadAsync(file);
+  const jsonEntry = zip.file("dataset.json");
+  if (!jsonEntry) throw new Error("No dataset.json found in the ZIP file.");
+
+  const text = await jsonEntry.async("text");
+  const parsed = JSON.parse(text);
+  if (!Array.isArray(parsed.items)) {
+    throw new Error("dataset.json must include an items array.");
+  }
+
+  for (const item of parsed.items) {
+    const images =
+      Array.isArray(item.images) && item.images.length > 0
+        ? item.images
+        : item.image
+          ? [item.image]
+          : [];
+
+    const resolved = await Promise.all(
+      images.map(async (src) => {
+        if (src.startsWith("data:") || /^https?:\/\//.test(src)) return src;
+        const entry = zip.file(src);
+        if (!entry) return src;
+        const b64 = await entry.async("base64");
+        const ext = src.split(".").pop().toLowerCase();
+        const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
+        return `data:${mime};base64,${b64}`;
+      }),
+    );
+
+    item.image = resolved[0] ?? item.image;
+    item.images = resolved;
+  }
+
+  return normalizeDataset(parsed);
+}
+
 function bindSwipe() {
-  const threshold = 90;
+  const choiceThreshold = 90;
+  const imageThreshold = 50;
 
   ui.swipeCard.addEventListener("pointerdown", (event) => {
     if (state.swipeLock) return;
+    const card = state.activeCards[state.currentIndex];
+    const imageCount = getCardImages(card).length;
+
     state.pointer.isDown = true;
     state.pointer.startX = event.clientX;
     state.pointer.deltaX = 0;
-    ui.swipeCard.style.transition = "none";
+    state.pointer.mode =
+      imageCount > 1 && event.target instanceof Element && event.target.closest(".image-stage")
+        ? "image"
+        : "choice";
+
+    if (state.pointer.mode === "image") {
+      ui.cardImage.style.transition = "none";
+    } else {
+      ui.swipeCard.style.transition = "none";
+    }
+
     ui.swipeCard.setPointerCapture(event.pointerId);
   });
 
   ui.swipeCard.addEventListener("pointermove", (event) => {
     if (!state.pointer.isDown || state.swipeLock) return;
     state.pointer.deltaX = event.clientX - state.pointer.startX;
+
+    if (state.pointer.mode === "image") {
+      ui.cardImage.style.transform = `translateX(${state.pointer.deltaX}px)`;
+      return;
+    }
+
     const rotate = state.pointer.deltaX * 0.05;
     ui.swipeCard.style.transform = `translateX(${state.pointer.deltaX}px) rotate(${rotate}deg)`;
 
-    const opacity = Math.min(Math.abs(state.pointer.deltaX) / threshold, 1);
+    const opacity = Math.min(Math.abs(state.pointer.deltaX) / choiceThreshold, 1);
     ui.leftHint.style.opacity = state.pointer.deltaX < 0 ? String(opacity) : "0";
     ui.rightHint.style.opacity = state.pointer.deltaX > 0 ? String(opacity) : "0";
   });
@@ -548,14 +748,28 @@ function bindSwipe() {
   const endPointer = () => {
     if (!state.pointer.isDown || state.swipeLock) return;
     state.pointer.isDown = false;
-    if (state.pointer.deltaX <= -threshold) {
+
+    if (state.pointer.mode === "image") {
+      if (state.pointer.deltaX <= -imageThreshold) {
+        moveCardImage(1);
+      } else if (state.pointer.deltaX >= imageThreshold) {
+        moveCardImage(-1);
+      }
+      ui.cardImage.style.transition = "transform 180ms ease";
+      ui.cardImage.style.transform = "translateX(0)";
+      state.pointer.mode = "choice";
+      return;
+    }
+
+    if (state.pointer.deltaX <= -choiceThreshold) {
       registerChoice("ai");
       return;
     }
-    if (state.pointer.deltaX >= threshold) {
+    if (state.pointer.deltaX >= choiceThreshold) {
       registerChoice("real");
       return;
     }
+    state.pointer.mode = "choice";
     resetCardTransform();
   };
 
@@ -582,6 +796,15 @@ function bindEvents() {
 
   ui.guessAiBtn.addEventListener("click", () => registerChoice("ai"));
   ui.guessRealBtn.addEventListener("click", () => registerChoice("real"));
+
+  ui.imagePrevBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    moveCardImage(-1);
+  });
+  ui.imageNextBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    moveCardImage(1);
+  });
 
   ui.playAgainBtn.addEventListener("click", () => {
     showView("profile");
@@ -640,10 +863,12 @@ function bindEvents() {
     }
 
     const data = new FormData(ui.builderForm);
-    const file = data.get("imageFile");
-    if (!(file instanceof File)) return;
+    const selectedFiles = data
+      .getAll("imageFile")
+      .filter((file) => file instanceof File && file.size > 0);
+    if (selectedFiles.length === 0) return;
 
-    const imageDataUrl = await fileToDataUrl(file);
+    const imageDataUrls = await Promise.all(selectedFiles.map((file) => fileToDataUrl(file)));
     const title = String(data.get("title") || "Untitled");
     const truth = String(data.get("truth") || "ai");
     const id = `${truth}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -652,7 +877,8 @@ function bindEvents() {
       id,
       title,
       truth,
-      image: imageDataUrl,
+      image: imageDataUrls[0],
+      images: imageDataUrls,
       source: "Uploaded by researcher",
     });
 
@@ -660,9 +886,16 @@ function bindEvents() {
     ui.builderForm.reset();
   });
 
-  ui.exportDatasetBtn.addEventListener("click", () => {
+  ui.exportDatasetBtn.addEventListener("click", async () => {
     if (!state.dataset) return;
-    downloadFile("dataset-export.json", JSON.stringify(state.dataset, null, 2), "application/json");
+    const hasLocalImages = state.dataset.items.some((item) =>
+      getCardImages(item).some((src) => src.startsWith("data:")),
+    );
+    if (hasLocalImages) {
+      await exportDatasetAsZip(state.dataset);
+    } else {
+      downloadFile("dataset-export.json", JSON.stringify(state.dataset, null, 2), "application/json");
+    }
   });
 
   ui.importDatasetInput.addEventListener("change", async (event) => {
@@ -671,12 +904,18 @@ function bindEvents() {
     if (!file) return;
 
     try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      if (!Array.isArray(parsed.items)) {
-        throw new Error("Dataset JSON must include an items array.");
+      let dataset;
+      if (file.name.toLowerCase().endsWith(".zip")) {
+        dataset = await importDatasetFromZip(file);
+      } else {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed.items)) {
+          throw new Error("Dataset JSON must include an items array.");
+        }
+        dataset = normalizeDataset(parsed);
       }
-      state.dataset = parsed;
+      state.dataset = dataset;
       saveCustomDataset();
       alert("Dataset imported.");
     } catch (error) {
